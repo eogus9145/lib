@@ -88,15 +88,20 @@
             }
 
             async setEvent(slide) {
-                slide.addEventListener("mouseenter", async (e) => {
+                const onMouseEnter = async (e) => {
                     this.stopAnimate = true;
                     cancelAnimationFrame(this.animationFrameId);
-                });
-
-                slide.addEventListener("mouseleave", async (e) => {
+                };
+                const onMouseLeave = async (e) => {
                     this.stopAnimate = false;
                     this.sliding(slide);
-                });
+                };
+                slide.addEventListener("mouseenter", onMouseEnter);
+                slide.addEventListener("mouseleave", onMouseLeave);
+                this.cleanup = () => {
+                    slide.removeEventListener("mouseenter", onMouseEnter);
+                    slide.removeEventListener("mouseleave", onMouseLeave);
+                };
             }
 
             async resize(target, slide, idx, items) {
