@@ -68,8 +68,8 @@
                         this.targetHeight = target.offsetHeight;
                         let slide = target.querySelector(".slide");
                         let items = slide.querySelectorAll(".slide-item");
-                        await this.resize(target, slide, 0, items);
-                        await this.sliding(slide);
+                        let cnt = await this.resize(target, slide, 0, items);
+                        await this.sliding(slide, 0, cnt);
                         await this.setEvent(slide);
                     } else if(this.targetType == 'class') {
                         let targets = document.querySelectorAll(this.cssSelector);
@@ -79,8 +79,8 @@
                             if(idx > 0) target.style.marginLeft = this.margin + "px";
                             let slide = target.querySelector(".slide");
                             let items = slide.querySelectorAll(".slide-item");
-                            await this.resize(target, slide, idx, items);
-                            await this.sliding(slide, idx);
+                            let cnt = await this.resize(target, slide, idx, items);
+                            await this.sliding(slide, idx, cnt);
                             await this.setEvent(slide);
                         });
                     }
@@ -156,21 +156,22 @@
                 }
                 console.log("this.fill : ", this.fill);
                 
-                this.divCnt = 1;
+                let divCnt = 1;
                 if(this.fill) {
+                    console.log(totalWidth, totalHeight);
                     if(this.direction == 'horizontal') {
-                        this.divCnt = Math.ceil(target.offsetWidth / totalWidth);
+                        divCnt = Math.ceil(target.offsetWidth / totalWidth);
                     } else if(this.direction == 'vertical') {
-                        this.divCnt = Math.ceil(target.offsetHeight / totalHeight);
+                        divCnt = Math.ceil(target.offsetHeight / totalHeight);
                     }
     
-                    console.log(this.divCnt);
+                    console.log(divCnt);
 
-                    if (slide.childElementCount > items.length * this.divCnt) {
+                    if (slide.childElementCount > items.length * divCnt) {
                         return; 
                     }
 
-                    for(let j=0; j<this.divCnt - 1; j++) {
+                    for(let j=0; j<divCnt - 1; j++) {
                         for(let i=0; i<items.length; i++) {
                             let item = items[i];
                             let clone = item.cloneNode(true);
@@ -178,14 +179,15 @@
                         }
                     }
                 }
-                
 
                 if(this.deg != 0) {
                     target.style.transform = `rotate(${this.deg}deg)`
                 }
+
+                return divCnt;
             }
 
-            async sliding(slide, idx) {
+            async sliding(slide, idx, divCnt) {
                 if (this.animationFrameId) {
                     cancelAnimationFrame(this.animationFrameId);
                 }
@@ -196,30 +198,30 @@
                     if(this.reverse) {
                         this.position += this.speed;
                         if(this.direction == 'horizontal') {
-                            let limit = (slide.scrollWidth / this.divCnt);
+                            let limit = (slide.scrollWidth / divCnt);
                             if (this.position >= limit) {
-                                this.position = this.divCnt == 1 ? -(this.targetWidth) : 0;
+                                this.position = divCnt == 1 ? -(this.targetWidth) : 0;
                             }
                             slide.style.transform = `translateX(${this.position}px)`;
                         } else if(this.direction == 'vertical') {
-                            let limit = (slide.scrollHeight / this.divCnt);
+                            let limit = (slide.scrollHeight / divCnt);
                             if (this.position >= limit) {
-                                this.position = this.divCnt == 1 ? -(this.targetHeight) : 0;
+                                this.position = divCnt == 1 ? -(this.targetHeight) : 0;
                             }
                             slide.style.transform = `translateY(${this.position}px)`;
                         }
                     } else {
                         this.position -= this.speed;
                         if(this.direction == 'horizontal') {
-                            let limit = -(slide.scrollWidth / this.divCnt);
+                            let limit = -(slide.scrollWidth / divCnt);
                             if (this.position < limit) {
-                                this.position = this.divCnt == 1 ? this.targetWidth : 0;
+                                this.position = divCnt == 1 ? this.targetWidth : 0;
                             }
                             slide.style.transform = `translateX(${this.position}px)`;
                         } else if(this.direction == 'vertical') {
-                            let limit = -(slide.scrollHeight / this.divCnt);
+                            let limit = -(slide.scrollHeight / divCnt);
                             if (this.position < limit) {
-                                this.position = this.divCnt == 1 ? this.targetHeight : 0;
+                                this.position = divCnt == 1 ? this.targetHeight : 0;
                             }
                             slide.style.transform = `translateY(${this.position}px)`;
                         }  
