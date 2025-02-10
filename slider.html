@@ -68,7 +68,8 @@
                         this.targetHeight = target.offsetHeight;
                         let slide = target.querySelector(".slide");
                         let items = slide.querySelectorAll(".slide-item");
-                        let cnt = await this.resize(target, slide, 0, items);
+                        await this.resize(target, slide, 0, items);
+                        let cnt = await this.cloning(slide, items);
                         await this.sliding(slide, 0, cnt);
                         await this.setEvent(slide);
                     } else if(this.targetType == 'class') {
@@ -79,7 +80,8 @@
                             if(idx > 0) target.style.marginLeft = this.margin + "px";
                             let slide = target.querySelector(".slide");
                             let items = slide.querySelectorAll(".slide-item");
-                            let cnt = await this.resize(target, slide, idx, items);
+                            await this.resize(target, slide, idx, items);
+                            let cnt = await this.cloning(slide, items);
                             await this.sliding(slide, idx, cnt);
                             await this.setEvent(slide);
                         });
@@ -88,28 +90,21 @@
             }
 
             async setEvent(slide) {
-                const onMouseEnter = async (e) => {
+                slide.addEventListener("mouseenter", async (e) => {
                     this.stopAnimate = true;
                     cancelAnimationFrame(this.animationFrameId);
-                };
-                const onMouseLeave = async (e) => {
+                });
+
+                slide.addEventListener("mouseleave", async (e) => {
                     this.stopAnimate = false;
                     this.sliding(slide);
-                };
-                slide.addEventListener("mouseenter", onMouseEnter);
-                slide.addEventListener("mouseleave", onMouseLeave);
-                this.cleanup = () => {
-                    slide.removeEventListener("mouseenter", onMouseEnter);
-                    slide.removeEventListener("mouseleave", onMouseLeave);
-                };
+                });
             }
 
             async resize(target, slide, idx, items) {
-
                 target.style.overflow = "hidden";
                 target.style.position = "relative";
                 target.style.backgroundColor = "#fff";
-
                 slide.style.display = "flex";
                 slide.style.position = "absolute";
                 slide.style.gap = this.gap + "px";
@@ -149,33 +144,37 @@
                     }
                     imgDirection = "width";
                 }
-                let totalWidth = 0;
-                let totalHeight = 0;
                 for(let i=0; i<items.length; i++) {
                     let item = items[i];
                     item.style.padding = this.padding + "px";
                     let img = item.querySelector("img");
                     img.style[imgDirection] = "100%";
-                    totalHeight += img.offsetHeight;
-                    totalWidth += img.offsetWidth;
                 }
-                console.log("this.fill : ", this.fill);
-                
+                if(this.deg != 0) {
+                    target.style.transform = `rotate(${this.deg}deg)`
+                }
+            }
+
+            async cloning(slide, items) {
+                let totalWidth = 0;
+                let totalHeight = 0;
+                for(let i=0; i<items.length; i++) {
+                    let item = items[i];
+                    console.log(item);
+                    totalHeight += item.offsetHeight;
+                    totalWidth += item.offsetWidth;
+                }
                 let divCnt = 1;
                 if(this.fill) {
                     console.log(totalWidth, totalHeight);
                     if(this.direction == 'horizontal') {
-                        divCnt = Math.ceil(target.offsetWidth / totalWidth);
+                        divCnt = Math.ceil(this.targetWidth / totalWidth);
                     } else if(this.direction == 'vertical') {
-                        divCnt = Math.ceil(target.offsetHeight / totalHeight);
+                        divCnt = Math.ceil(this.targetHeight / totalHeight);
                     }
-    
-                    console.log(divCnt);
-
                     if (slide.childElementCount > items.length * divCnt) {
                         return; 
                     }
-
                     for(let j=0; j<divCnt - 1; j++) {
                         for(let i=0; i<items.length; i++) {
                             let item = items[i];
@@ -184,11 +183,6 @@
                         }
                     }
                 }
-
-                if(this.deg != 0) {
-                    target.style.transform = `rotate(${this.deg}deg)`
-                }
-
                 return divCnt;
             }
 
