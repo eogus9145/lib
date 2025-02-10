@@ -18,13 +18,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-wrap: wrap;
             flex-direction: column;
         }
 
         .test {
-            width: 100px;
-            height: 800px;
+            width: 100%;
+            height: 100px;
             border: 1px solid #000;
         }
     </style>
@@ -41,8 +40,6 @@
                 }
                 this.cssSelector = cssSelector;
                 this.option = option;
-                this.position = 0;
-                this.stopAnimate = false;
 
                 // option
                 this.direction = (this.option && this.option.direction) ? this.option.direction : 'horizontal';
@@ -54,7 +51,7 @@
                 this.reverse = this.option && this.option.reverse ? this.option.reverse : false;
                 this.cross = (this.targetType == 'class' && this.option && this.option.cross) ? this.option.cross : false;
                 this.fill = (this.option && this.option.fill == false) ? false : true;
-
+                this.hoverStop = (this.option && this.option.hoverStop) ? this.option.hoverStop : false;
 
                 this.init();
 
@@ -68,37 +65,52 @@
                         this.targetHeight = target.offsetHeight;
                         let slide = target.querySelector(".slide");
                         let items = slide.querySelectorAll(".slide-item");
-                        await this.resize(target, slide, 0, items);
-                        let cnt = await this.cloning(slide, items);
-                        await this.sliding(slide, 0, cnt);
-                        await this.setEvent(slide);
+                        let lastImg = items[items.length - 1].querySelector("img");
+                        new Promise((resolve) => {
+                            lastImg.onload = async () => {
+                                this['position0'] = 0;
+                                await this.resize(target, slide, 0, items);
+                                let cnt = await this.cloning(slide, items);
+                                await this.sliding(slide, 0, cnt);
+                                await this.setEvent(target, slide, 0, cnt);
+                                resolve();
+                            };
+                        });
                     } else if(this.targetType == 'class') {
                         let targets = document.querySelectorAll(this.cssSelector);
-                        targets.forEach(async (target, idx) => {
+                        for(let i=0; i<targets.length; i++) {
+                            let target = targets[i];
+                            let idx = i;
                             this.targetWidth = target.offsetWidth;
                             this.targetHeight = target.offsetHeight;
                             if(idx > 0) target.style.marginLeft = this.margin + "px";
                             let slide = target.querySelector(".slide");
                             let items = slide.querySelectorAll(".slide-item");
-                            await this.resize(target, slide, idx, items);
-                            let cnt = await this.cloning(slide, items);
-                            await this.sliding(slide, idx, cnt);
-                            await this.setEvent(slide);
-                        });
+                            let lastImg = items[items.length - 1].querySelector("img");
+                            new Promise((resolve) => {
+                                lastImg.onload = async () => {
+                                    this['position'+idx] = 0;
+                                    await this.resize(target, slide, idx, items);
+                                    let cnt = await this.cloning(slide, items);
+                                    await this.sliding(slide, idx, cnt);
+                                    await this.setEvent(target, slide, idx, cnt);
+                                    resolve();
+                                };
+                            });
+                        }
                     }
                 });
             }
 
-            async setEvent(slide) {
-                slide.addEventListener("mouseenter", async (e) => {
-                    this.stopAnimate = true;
-                    cancelAnimationFrame(this.animationFrameId);
-                });
-
-                slide.addEventListener("mouseleave", async (e) => {
-                    this.stopAnimate = false;
-                    this.sliding(slide);
-                });
+            async setEvent(target, slide, idx, cnt) {
+                if(this.hoverStop) {
+                    target.addEventListener("mouseenter", async (e) => {
+                        cancelAnimationFrame(this['animationFrameId' + idx]);
+                    });
+                    target.addEventListener("mouseleave", async (e) => {
+                        this.sliding(slide, idx, cnt);
+                    });
+                }
             }
 
             async resize(target, slide, idx, items) {
@@ -160,22 +172,18 @@
                 let totalHeight = 0;
                 for(let i=0; i<items.length; i++) {
                     let item = items[i];
-                    console.log(item);
                     totalHeight += item.offsetHeight;
                     totalWidth += item.offsetWidth;
                 }
                 let divCnt = 1;
                 if(this.fill) {
-                    console.log(totalWidth, totalHeight);
                     if(this.direction == 'horizontal') {
                         divCnt = Math.ceil(this.targetWidth / totalWidth);
                     } else if(this.direction == 'vertical') {
                         divCnt = Math.ceil(this.targetHeight / totalHeight);
                     }
-                    if (slide.childElementCount > items.length * divCnt) {
-                        return; 
-                    }
-                    for(let j=0; j<divCnt - 1; j++) {
+                    if(divCnt < 2) divCnt = 2;
+                    for(let j=0; j<divCnt; j++) {
                         for(let i=0; i<items.length; i++) {
                             let item = items[i];
                             let clone = item.cloneNode(true);
@@ -183,57 +191,108 @@
                         }
                     }
                 }
+
                 return divCnt;
             }
 
             async sliding(slide, idx, divCnt) {
+                console.log(divCnt);
                 if (this.animationFrameId) {
                     cancelAnimationFrame(this.animationFrameId);
                 }
+                divCnt = divCnt + 1;
                 const animate = () => {
-                    if(this.stopAnimate) {
-                        return;
-                    }
                     if(this.reverse) {
-                        this.position += this.speed;
+                        if(this.cross && idx % 2 !== 0) {
+                            this['position' + idx] -= this.speed;
+                        } else {
+                            this['position' + idx] += this.speed;
+                        }
                         if(this.direction == 'horizontal') {
-                            let limit = (slide.scrollWidth / divCnt);
-                            if (this.position >= limit) {
-                                this.position = divCnt == 1 ? -(this.targetWidth) : 0;
+                            if(this.cross && idx % 2 !== 0) {
+                                let limit = -(slide.scrollWidth / divCnt);
+                                if (this['position' + idx] < limit) {
+                                    this['position' + idx] = divCnt == 1 ? (this.targetWidth) : 0;
+                                }
+                            } else {
+                                let limit = (slide.scrollWidth / divCnt);
+                                if (this['position' + idx] >= limit) {
+                                    this['position' + idx] = divCnt == 1 ? -(this.targetWidth) : 0;
+                                }                                
                             }
-                            slide.style.transform = `translateX(${this.position}px)`;
+                            slide.style.transform = `translateX(${this['position' + idx]}px)`;
                         } else if(this.direction == 'vertical') {
-                            let limit = (slide.scrollHeight / divCnt);
-                            if (this.position >= limit) {
-                                this.position = divCnt == 1 ? -(this.targetHeight) : 0;
+                            if(this.cross && idx % 2 !== 0) {
+                                let limit = -(slide.scrollHeight / divCnt);
+                                if (this['position' + idx] < limit) {
+                                    this['position' + idx] = divCnt == 1 ? (this.targetHeight) : 0;
+                                }
+                            } else {
+                                let limit = (slide.scrollHeight / divCnt);
+                                if (this['position' + idx] >= limit) {
+                                    this['position' + idx] = divCnt == 1 ? -(this.targetHeight) : 0;
+                                }                                
                             }
-                            slide.style.transform = `translateY(${this.position}px)`;
+                            slide.style.transform = `translateY(${this['position' + idx]}px)`;
                         }
                     } else {
-                        this.position -= this.speed;
+                        if(this.cross && idx % 2 !== 0) {
+                            this['position' + idx] += this.speed;
+                        } else {
+                            this['position' + idx] -= this.speed;
+                        }
                         if(this.direction == 'horizontal') {
-                            let limit = -(slide.scrollWidth / divCnt);
-                            if (this.position < limit) {
-                                this.position = divCnt == 1 ? this.targetWidth : 0;
+                            if(this.cross && idx % 2 !== 0) {
+                                let limit = (slide.scrollWidth / divCnt);
+                                if (this['position' + idx] >= limit) {
+                                    this['position' + idx] = divCnt == 1 ? -(this.targetWidth) : 0;
+                                }
+                            } else {
+                                let limit = -(slide.scrollWidth / divCnt);
+                                if (this['position' + idx] < limit) {
+                                    this['position' + idx] = divCnt == 1 ? this.targetWidth : 0;
+                                }
                             }
-                            slide.style.transform = `translateX(${this.position}px)`;
+                            slide.style.transform = `translateX(${this['position' + idx]}px)`;
                         } else if(this.direction == 'vertical') {
-                            let limit = -(slide.scrollHeight / divCnt);
-                            if (this.position < limit) {
-                                this.position = divCnt == 1 ? this.targetHeight : 0;
+                            if(this.cross && idx % 2 !== 0) {
+                                let limit = (slide.offsetHeight / divCnt);
+                                if (this['position' + idx] >= limit) {
+                                    this['position' + idx] = divCnt == 1 ? -(this.targetHeight) : 0;
+                                }
+                            } else {
+                                let limit = -(slide.scrollHeight / divCnt);
+                                if (this['position' + idx] < limit) {
+                                    this['position' + idx] = divCnt == 1 ? this.targetHeight : 0;
+                                }                                
                             }
-                            slide.style.transform = `translateY(${this.position}px)`;
+                            slide.style.transform = `translateY(${this['position' + idx]}px)`;
                         }  
                     }
-                    this.animationFrameId = requestAnimationFrame(animate);
+                    this['animationFrameId' + idx] = requestAnimationFrame(animate);
                 }
-                this.animationFrameId = requestAnimationFrame(animate);
+                this['animationFrameId' + idx] = requestAnimationFrame(animate);
             }
         }
         
     </script>
 </head>
 <body>
+
+    <div class="test">
+        <div class="slide">
+            <div class="slide-item">
+                <img src="./sample1.png">
+            </div>
+            <div class="slide-item">
+                <img src="./sample2.jpg">
+            </div>
+            <div class="slide-item">
+                <img src="./sample3.gif">
+            </div>
+        </div>
+    </div>
+
     <div class="test">
         <div class="slide">
             <div class="slide-item">
@@ -252,15 +311,17 @@
         let slider = new Slider(
             ".test", 
             {
-                direction: 'vertical', 
-                speed: 5, 
+                direction: 'horizontal', 
+                speed: 1, 
                 deg: 0, 
-                gap: 10, 
+                gap: 0, 
                 margin : 0, 
                 padding: 10,
+                fill: true,
+                cross : true,
+                hoverStop: true,
             }
         );
-        console.log(slider.cross);
     </script>
 </body>
 </html>
