@@ -53,7 +53,7 @@
                 this.padding = (this.option && this.option.padding) ? this.option.padding : 0;
                 this.reverse = this.option && this.option.reverse ? this.option.reverse : false;
                 this.cross = (this.targetType == 'class' && this.option && this.option.cross) ? this.option.cross : false;
-                this.fill = (this.option && this.option.fill) ? this.option.fill : true;
+                this.fill = (this.option && this.option.fill == false) ? false : true;
 
 
                 this.init();
@@ -154,6 +154,8 @@
                     totalHeight += img.offsetHeight;
                     totalWidth += img.offsetWidth;
                 }
+                console.log("this.fill : ", this.fill);
+                
                 this.divCnt = 1;
                 if(this.fill) {
                     if(this.direction == 'horizontal') {
@@ -176,6 +178,7 @@
                         }
                     }
                 }
+                
 
                 if(this.deg != 0) {
                     target.style.transform = `rotate(${this.deg}deg)`
