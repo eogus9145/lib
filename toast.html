@@ -51,8 +51,11 @@
                     fontColor: "#000000",
                     fontSize: 12,
                     headerBackground: "transparent",
+                    headerFontColor: "#000000",
                     bodyBackground: "transparent",
+                    bodyFontColor: "#000000",
                     footerBackground: "transparent",
+                    footerFontColor: "#000000",
                 };
                 this.option = Object.assign({}, defaults, option);
 
@@ -73,7 +76,7 @@
                 this.footer = document.createElement("div");
                 this.title = document.createElement("span");
                 this.closeBtn = document.createElement("button");
-                this.closeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="1rem" fill="${this.option.color}"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>`;
+                this.closeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="1rem" fill="${this.option.headerFontColor}"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>`;
 
                 this.title.textContent = this.option.title;
 
@@ -129,6 +132,7 @@
                 this.header.style.justifyContent = "space-between";
                 this.header.style.alignItems = "center";
                 this.header.style.background = this.option.headerBackground;
+                this.header.style.color = this.option.headerFontColor;
 
                 // body
                 this.body.style.flexGrow = 1;
@@ -137,10 +141,12 @@
                 this.body.style.display = "flex";
                 this.body.style.justifyContent = "center";
                 this.body.style.alignItems = "center";
+                this.body.style.color = this.option.bodyFontColor;
 
                 // footer
                 this.footer.style.padding = "0 " + this.option.padding + "px";
                 this.footer.style.background = this.option.footerBackground;
+                this.footer.style.color = this.option.footerFontColor;
 
                 // closeBtn
                 this.closeBtn.style.border = "none";
@@ -284,7 +290,7 @@
 </head>
 <body>
     <script>
-        let toast = new Toast();
+        let toast = new Toast({headerBackground: 'navy', headerFontColor: "white"});
         setTimeout(() => {
             toast.open("메롱");
         }, 1000);
