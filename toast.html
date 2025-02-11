@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알림토스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #test {
+            width: 500px;
+            height: 300px;
+            background-color: red;
+        }
+    </style>
+    <script>
+        class Toast {
+            constructor(option) {
+                // option 파라미터
+                const defaults = {
+                    id: "toast",
+                    title: "알림",
+                    position: 3,
+                    animation: 'slide',
+                    animationDirection: 'vertical',
+                    animationSpeed: 0.2,
+                    autoClose: false,
+                    autoCloseTimeout: 5,
+                    width: 300,
+                    height: 150,
+                    margin: 10,
+                    padding: 8,
+                    backgroundColor: "#ffffff",
+                    backgroundImage: "",
+                    borderWidth: 1,
+                    borderStyle: "solid",
+                    borderColor: "#000000",
+                    borderRadius: "10",
+                    fontColor: "#000000",
+                    fontSize: 12,
+                    headerBackground: "transparent",
+                    bodyBackground: "transparent",
+                    footerBackground: "transparent",
+                };
+                this.option = Object.assign({}, defaults, option);
+
+                this.init();
+            }
+
+            init() {
+                this.setElement();
+                this.setStyle();
+                this.setEvent();
+                document.body.appendChild(this.toast);
+            }
+
+            setElement() {
+                this.toast = document.createElement("div");
+                this.header = document.createElement("div");
+                this.body = document.createElement("div");
+                this.footer = document.createElement("div");
+                this.title = document.createElement("span");
+                this.closeBtn = document.createElement("button");
+                this.closeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="1rem" fill="${this.option.color}"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>`;
+
+                this.title.textContent = this.option.title;
+
+                this.header.appendChild(this.title);
+                this.header.appendChild(this.closeBtn);
+                this.toast.appendChild(this.footer);
+                this.toast.appendChild(this.header);
+                this.toast.appendChild(this.body);
+                this.toast.appendChild(this.footer);
+                this.toast.id = this.option.id;
+            }
+
+            setStyle() {
+                // toast
+                this.toast.style.position = "fixed";
+                this.toast.style.overflow = "hidden";
+                this.toast.style.display = "none";
+                this.toast.style.flexDirection = "column";
+                this.toast.style.width = this.option.width + "px";
+                this.toast.style.height = this.option.height + "px";
+                this.toast.style.margin = this.option.margin + "px";
+                this.toast.style.backgroundColor = this.option.backgroundColor;
+                this.toast.style.backgroundImage = this.option.backgroundImage !== "" && this.option.backgroundImage;
+                this.toast.style.borderWidth = this.option.borderWidth + "px";
+                this.toast.style.borderStyle = this.option.borderStyle;
+                this.toast.style.borderColor = this.option.borderColor;
+                this.toast.style.borderRadius = this.option.borderRadius + "px";
+                this.toast.style.color = this.option.fontColor;
+                this.toast.style.fontSize = this.option.fontSize + "px";
+                switch(this.option.position) {
+                    case 1 : //좌측상단
+                        this.toast.style.top = 0;
+                        this.toast.style.left = 0;
+                    break;
+                    case 2 : //우측상단
+                        this.toast.style.top = 0;
+                        this.toast.style.right = 0;
+                    break;
+                    case 3 : //우측하단
+                        this.toast.style.bottom = 0;
+                        this.toast.style.right = 0;
+                    break;
+                    case 4 : //좌측하단
+                        this.toast.style.bottom = 0;
+                        this.toast.style.left = 0;
+                    break;
+                }
+
+                // title
+                this.header.style.padding = "0 " + this.option.padding + "px";
+                this.header.style.backgroundColor = "red";
+                this.header.style.display = "flex";
+                this.header.style.justifyContent = "space-between";
+                this.header.style.alignItems = "center";
+                this.header.style.background = this.option.headerBackground;
+
+                // body
+                this.body.style.flexGrow = 1;
+                this.body.style.padding = this.option.padding + "px";
+                this.body.style.background = this.option.bodyBackground;
+                this.body.style.display = "flex";
+                this.body.style.justifyContent = "center";
+                this.body.style.alignItems = "center";
+
+                // footer
+                this.footer.style.padding = "0 " + this.option.padding + "px";
+                this.footer.style.background = this.option.footerBackground;
+
+                // closeBtn
+                this.closeBtn.style.border = "none";
+                this.closeBtn.style.outline = "none";
+                this.closeBtn.style.backgroundColor = "transparent";
+                this.closeBtn.style.margin = 0;
+                this.closeBtn.style.padding = 0;
+                this.closeBtn.style.lineHeight = 0;
+                this.closeBtn.style.cursor = "pointer";
+            }
+
+            setEvent() {
+                this.closeBtn.addEventListener("click", () => {
+                    this.close();
+                });
+            }
+
+            open(message) {
+                this.body.textContent = message;
+                if(this.option.autoClose) {
+                    this.footer.textContent = `이 알림은 ${this.option.autoCloseTimeout}초 후에 닫힙니다`;
+                }
+                this[this.option.animation + "In"]();
+            }
+
+            close() {
+                this[this.option.animation + "Out"]();
+            }
+
+            autoClose() {
+                if(this.option.autoClose) {
+                    let timeout = this.option.autoCloseTimeout - 1;
+                    let countInterval = setInterval(() => {
+                        console.log("time : ", timeout);
+                        this.footer.textContent = `이 알림은 ${timeout}초 후에 닫힙니다`;
+                        timeout = timeout - 1;
+                        if(timeout <= 0) {
+                            clearInterval(countInterval);
+                            setTimeout(() => {
+                                this.close();
+                            }, 1000);
+                        }
+                    }, 1000);                    
+                }
+            }
+
+            fadeIn() {
+                this.toast.style.opacity = 0;
+                this.toast.style.display = "flex";
+                let start = null;
+                const animate = (timestamp) => {
+                    if(!start) start = timestamp;
+                    let elapsed = timestamp - start;
+                    let progress = Math.min(elapsed / (this.option.animationSpeed * 1000), 1);
+                    this.toast.style.opacity = progress;
+                    if(progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        return this.autoClose();
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+
+            fadeOut() {
+                let start = null;
+                const animate = (timestamp) => {
+                    if(!start) start = timestamp;
+                    let elapsed = timestamp - start;
+                    let progress = Math.min(elapsed / (this.option.animationSpeed * 1000), 1);
+                    this.toast.style.opacity = 1 - progress;
+                    if(progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        this.toast.style.display = "none";
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+
+            slideIn() {
+                this.toast.style.display = "flex";
+                let direction;
+                let directionStr;
+                if(this.option.animationDirection == 'horizontal') {
+                    direction = (this.option.position == 0 || this.option.position == 3) ? -1 : 1;
+                    directionStr = "X";
+                } else {
+                    direction = this.option.position < 3 ? -1 : 1;
+                    directionStr = "Y";
+                }
+                this.toast.style.transform = `translate${directionStr}(calc(${100 * direction}% + ${this.option.margin > 0 ? this.option.margin + "px" : ""}))`;
+                let start = null;
+                const animate = (timestamp) => {
+                    if(!start) start = timestamp;
+                    let elapsed = timestamp - start;
+                    let progress = Math.min(elapsed / (this.option.animationSpeed * 1000), 1);
+                    let startY = 100 * direction;
+                    let endY = 0;
+                    let currentY = startY - (startY - endY) * progress;
+                    this.toast.style.transform = `translate${directionStr}(${currentY}%)`;
+                    if(progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        return this.autoClose();
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+
+            slideOut() {
+                let direction;
+                let directionStr;
+                if(this.option.animationDirection == 'horizontal') {
+                    direction = (this.option.position == 0 || this.option.position == 3) ? -1 : 1;
+                    directionStr = "X";
+                } else {
+                    direction = this.option.position < 3 ? -1 : 1;
+                    directionStr = "Y";
+                }
+                let start = null;
+                const animate = (timestamp) => {
+                    if(!start) start = timestamp;
+                    let elapsed = timestamp - start;
+                    let progress = Math.min(elapsed / (this.option.animationSpeed * 1000), 1);
+                    let startY = 0;
+                    let endY = 100 * direction;
+                    let currentY = startY - (startY - endY) * progress;
+                    this.toast.style.transform = `translate${directionStr}(${currentY}%)`;
+                    if(progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        this.toast.style.display = "none";
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+
+        }
+    </script>
+</head>
+<body>
+    <script>
+        let toast = new Toast();
+        setTimeout(() => {
+            toast.open("메롱");
+        }, 1000);
+    </script>
+</body>
+</html>
