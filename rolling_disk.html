@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌림판</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        button {
+            padding: 1rem;
+        }
+        #test {
+            width: 500px;
+            margin-bottom: 1rem;
+        }
+    </style>
+    <script>
+        
+    </script>
+</head>
+<body>
+
+    <div>
+        <canvas id="test" width="800" height="800"></canvas>
+    </div>
+    <div>
+        <button onclick="javascript:disc.rotate();">Rotate</button>
+        <button onclick="javascript:disc.stop();">Stop</button>
+        <button onclick="javascript:disc.speedUp();">SpeedUp</button>
+        <button onclick="javascript:disc.speedDown();">SpeedDown</button>
+    </div>
+
+
+    <script>
+
+        class RollingDisc {
+            constructor(cssSelector, option) {
+                this.canvas = document.querySelector(cssSelector);
+                if(!this.canvas) return;
+                const defaults = {
+                    type: 'full',
+                    n: 8,
+                    deg: 0,
+                    speed: 1,
+                    reverse: false,
+                    colorSet: [],
+                };
+                this.option = Object.assign({}, defaults, option);
+                this.direction = this.option.reverse == true ? -1 : 1;
+                //this.option.speed = this.option.speed * this.direction;
+                this.isPlay = false;
+                this.render();
+            }
+
+            render() {
+                this.ctx = this.canvas.getContext('2d');
+                this.radius = (this.canvas.width / 2);
+                this.centerX = this.canvas.width / 2;
+                this.centerY = this.canvas.height / 2;
+                this.angleStep;
+                this.ctx.lineWidth = 0;
+                this.ctx.lineJoin = 'round';  // 선의 끝부분을 둥글게
+                this.ctx.lineCap = 'round';  // 선의 끝부분을 둥글게
+                this.ctx.globalCompositeOperation = 'source-over';
+
+                if (this.option.type === 'full') {
+                    this.angleStep = 2 * Math.PI / this.option.n;
+                } else if (this.option.type === 'half') {
+                    this.angleStep = Math.PI / this.option.n;
+                }
+                
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                if (this.option.type === 'full') {
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.centerX, this.centerY, this.radius, 0, 2 * Math.PI);
+                    this.ctx.closePath();
+                    this.ctx.fillStyle = 'white'; // 색상 설정 후 채우기
+                    this.ctx.fill();
+                    //this.ctx.stroke();
+                }
+
+                this.startAngle = (this.option.deg * Math.PI) / 180;
+                this.endAngle = this.startAngle + Math.PI;
+
+                if (this.option.type === 'half') {
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.centerX, this.centerY, this.radius, this.startAngle, this.endAngle);
+                    this.ctx.closePath();
+                    this.ctx.fillStyle = 'white'; // 색상 설정 후 채우기
+                    this.ctx.fill();
+                    //this.ctx.stroke();
+                }
+                
+                for (let i = 0; i < this.option.n; i++) {
+                    let sliceStartAngle, sliceEndAngle;
+
+                    if (this.option.type === 'full') {
+                        sliceStartAngle = this.startAngle + (i * this.angleStep);
+                        sliceEndAngle = sliceStartAngle + this.angleStep;
+                    } else if (this.option.type === 'half') {
+                        sliceStartAngle = this.startAngle + (i * this.angleStep);
+                        sliceEndAngle = sliceStartAngle + this.angleStep;
+                    }
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.centerX, this.centerY);
+                    this.ctx.arc(this.centerX, this.centerY, this.radius, sliceStartAngle, sliceEndAngle);
+                    this.ctx.closePath();
+                    if(this.option.colorSet.length > 0) {
+                        this.ctx.fillStyle = this.option.colorSet[i];
+                    } else {
+                        this.ctx.fillStyle = `hsl(${(i * 360 / this.option.n) % 360}, 100%, 50%)`;
+                    }
+                    this.ctx.fill();
+                }
+            }
+
+            rotate(speed) {
+                if(this.isPlay) return;
+                this.isPlay = true;
+                if(speed > 0) this.option.speed = speed;
+                const animate = () => {
+                    this.option.deg += this.option.speed * this.direction;
+                    if(Math.abs(this.option.deg) >= 360) {
+                        this.option.deg = 0;
+                    }
+                    this.render();
+                    this.rotateAnimation = requestAnimationFrame(animate);
+                }
+                this.rotateAnimation = requestAnimationFrame(animate);
+            }
+
+            stop() {
+                if(!this.rotateAnimation) return;
+                else {
+                    cancelAnimationFrame(this.rotateAnimation);
+                    this.isPlay = false;
+                }
+            }
+
+            speedUp() {
+                this.option.speed++;
+            }
+
+            speedDown() {
+                if(this.option.speed > 1) this.option.speed--;
+            }
+            
+        }
+
+        let disc = new RollingDisc("#test", {n:10, reverse: false});
+    </script>
+</body>
+</html>
