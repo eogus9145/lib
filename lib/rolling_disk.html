@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>돌림판</title>
+    <title>돌아돌아 돌림판</title>
     <style>
         * {
             margin: 0;
@@ -58,6 +58,7 @@
                     speed: 1,
                     reverse: false,
                     colorSet: [],
+                    arrow : false,
                 };
                 this.option = Object.assign({}, defaults, option);
                 this.direction = this.option.reverse == true ? -1 : 1;
@@ -76,6 +77,23 @@
                 this.ctx.lineJoin = 'round';  // 선의 끝부분을 둥글게
                 this.ctx.lineCap = 'round';  // 선의 끝부분을 둥글게
                 this.ctx.globalCompositeOperation = 'source-over';
+
+
+                if(this.option.arrow == true) {
+                    let arrow = document.createElement("div");
+                    this.canvas.parentNode.style.position = "relative";
+                    arrow.style.position = "absolute";
+                    arrow.style.top = 0;
+                    arrow.style.left = "50%";
+                    arrow.style.transform = `translate(-50%, -50%)`;
+                    arrow.style.width = "0px";
+                    arrow.style.height = "0px";
+                    arrow.style.borderLeft = `${Math.min(this.radius / 20, 20)}px solid transparent`;
+                    arrow.style.borderRight = `${Math.min(this.radius / 20, 20)}px solid transparent`;
+                    arrow.style.borderTop = `${Math.min(this.radius / 10, 40)}px solid black`;
+
+                    this.canvas.parentNode.appendChild(arrow);
+                }
 
                 if (this.option.type === 'full') {
                     this.angleStep = 2 * Math.PI / this.option.n;
@@ -163,7 +181,7 @@
             
         }
 
-        let disc = new RollingDisc("#test", {n:10, reverse: false});
+        let disc = new RollingDisc("#test", {n:5});
     </script>
 </body>
 </html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아코디언</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #test {
+            width: 500px;
+        }
+        #test > li {
+            font-size: 2rem;
+        }
+        #test > li > ul {
+            font-size: 1rem;
+            text-indent: 0.5rem;
+        }
+    </style>
+    <script>
+        class Arcodion {
+            constructor(cssSelector, option) {
+
+                const defaults = {
+                    arrowColor: "#000",
+                    svg : true,
+                };
+                this.option = Object.assign({}, defaults, option);
+
+                this.target = document.querySelector(cssSelector);
+                this.subjects = document.querySelectorAll(cssSelector + " > li");
+                this.contents = this.target.querySelectorAll("li > ul");
+                if(!this.target || this.subjects.length == 0) return;
+
+                window.addEventListener("DOMContentLoaded", (e) => {
+                    this.init();
+                })
+            }
+
+            init() {
+                this.setStyle();
+            }
+
+            toggle(idx) {
+                this.subjects.forEach((v,i) => {
+                    if(idx == i) {
+                        v.classList.toggle("on");
+                    } else {
+                        v.classList.remove("on");
+                    }
+                });
+                this.subjects.forEach((v,i) => {
+                    let status = v.classList.contains("on");
+                    if(status) this.spread(i);
+                    else this.fold(i);
+                });
+            }
+
+            spread(idx) {
+                if(this.option.svg) this['arrow' + idx].style.transform = "scale(-1)";
+                this.contents[idx].style.height = this['contentHeight' + idx] + "px";
+            }
+
+            fold(idx) {
+                if(this.option.svg) this['arrow' + idx].style.transform = "scaleY(1)";
+                this.contents[idx].style.height = 0;
+            }
+
+            setStyle() {
+                this.contents.forEach((content, idx) => {
+                    this['contentHeight' + idx] = content.offsetHeight;
+                    content.style.listStyle = "none";
+                    content.style.height = 0 + "px";
+                    content.style.overflow = "hidden";
+                    content.style.transition = "0.2s ease-in-out";
+                });
+                this.target.style.listStyle = "none";
+                this.subjects.forEach((sbj, idx) => {
+                    sbj.style.cursor = "pointer";
+                    sbj.style.position = "relative";
+                    sbj.style.height = "auto";
+                    if(this.option.svg) {
+                        let sbjFontSize = (parseInt(window.getComputedStyle(sbj)['font-size'])) * 0.8;
+                        let arrowTopPos = (parseInt(window.getComputedStyle(sbj)['height']) - parseInt(sbjFontSize)) / 2;
+                        this['arrow' + idx] = document.createElement("button");
+                        this['arrow' + idx].style.border = "none";
+                        this['arrow' + idx].style.outline = "none";
+                        this['arrow' + idx].style.cursor = "pointer";
+                        this['arrow' + idx].style.background = "transparent";
+                        this['arrow' + idx].style.padding = 0;
+                        this['arrow' + idx].style.lineHeight = 0;
+                        this['arrow' + idx].style.position = "absolute";
+                        this['arrow' + idx].style.width = sbjFontSize + "px";
+                        this['arrow' + idx].style.height = sbjFontSize + "px";
+                        this['arrow' + idx].style.top = arrowTopPos + "px";
+                        this['arrow' + idx].style.right = 0 + "px";
+                        this['arrow' + idx].style.transition = "0.2s ease-in-out";
+                        this['arrow' + idx].innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" 
+                            width="100%" height="100%" viewBox="0 0 24 24" 
+                            fill="none" stroke="${this.option.arrowColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        `;
+                        sbj.appendChild(this['arrow' + idx]);
+                    }
+
+                    sbj.addEventListener("click", (e) => {
+                        this.toggle(idx);
+                    });
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+    
+    <ul id="test">
+        <li>
+            ㄱㄱㄱㄱㄱ
+            <ul>
+                <li>가가가가가</li>
+                <li>거거거거거</li>
+                <li>고고고고고</li>
+            </ul>
+        </li>
+        <li>
+            ㄴㄴㄴㄴㄴ
+            <ul>
+                <li>나나나나나</li>
+                <li>너너너너너</li>
+                <li>노노노노노</li>
+            </ul>
+        </li>
+        <li>
+            ㄷㄷㄷㄷㄷ
+            <ul>
+                <li>다다다다다</li>
+                <li>더더더더더</li>
+                <li>도도도도도</li>
+            </ul>
+        </li>
+    </ul>
+
+    <script>
+        let arcodion = new Arcodion("#test");
+    </script>
+</body>
+</html>
