@@ -19,7 +19,7 @@
             justify-content: center;
             align-items: center;
         }
-        #test {
+        #calendar {
             width: 400px;
             height: 400px;
             border: 1px solid #000;
@@ -27,81 +27,329 @@
     </style>
     <script>
         class Calendar {
-            constructor(cssSelector, option) {
-                this.currentDate = new Date();
-                this.dayToKorean = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+            constructor(option) {
                 const defaults = {
-                    year: this.currentDate.getFullYear(),
-                    month: this.currentDate.getMonth() + 1,
-                    date: this.currentDate.getDate(),
-                    day: this.currentDate.getDay(),
+                    width: 250,
+                    margin: 4,
+                    padding: 8,
+                    animationSpeed: 0.2,
                 };
                 this.option = Object.assign({}, defaults, option);
-                this.target = document.querySelector(cssSelector);
-                if(!this.target) return;
-
+                this.isOpen = false;
                 this.init();
             }
 
             init() {
-                this.domInit();
-                this.setStyle();
+                this.render();
+                this.setEvent();
             }
 
-            domInit() {
-                this.monthYearDiv = document.createElement("div");
+            render() {
+                this.cal = document.createElement('div');
+                this.cal.style.width = this.option.width + "px";
+                this.cal.style.height = "auto";
+                this.cal.style.border = "1px solid black";
+                this.cal.style.display = "none";
+                this.cal.style.position = "absolute";
+                this.cal.style.backgroundColor = "#fff";
+                this.cal.style.border = "1px solid #ccc";
+                this.cal.style.color = "#444";
+                this.cal.style.borderRadius = 4 + "px";
+                this.cal.style.padding = this.option.padding + "px";
+
+                this.first = document.createElement("div");
+                this.first.style.width = "100%";
+                this.first.style.height = (this.option.width * 0.2) + "px";
+                this.first.style.display = "flex";
+                this.first.style.justifyContent = "space-between";
+                this.first.style.alignItems = "center"
+
                 this.prevBtn = document.createElement("button");
+                this.prevBtn.style.width = "10%";
+                this.prevBtn.style.aspectRatio = "1 / 1";
+                this.prevBtn.style.lineHeight = "1";
+                this.prevBtn.style.display = "flex";
+                this.prevBtn.style.justifyContent = "center";
+                this.prevBtn.style.alignItems = "center";
+                this.prevBtn.style.backgroundColor = "#fff";
+                this.prevBtn.style.border = "1px solid #ccc";
+                this.prevBtn.style.outline = "none";
+                this.prevBtn.style.borderRadius = "4px";
+                this.prevBtn.style.cursor = "pointer";
+                this.prevBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 -960 960 960" fill="#777"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>`;
+                this.prevBtn.addEventListener("click", (e) => {
+
+                });
+
+                this.title = document.createElement("span");
+                this.title.style.fontWeight = "600";
+
                 this.nextBtn = document.createElement("button");
-                this.monthYearStr = document.createElement("div");
-
-                this.dayDiv = document.createElement("div");
-                this.dayToKorean.map((day, idx) => {
-                    let span = document.createElement("span");
-                    span.textContent = day.substring(0, 1);
-                    this.dayDiv.appendChild(span);
+                this.nextBtn.style.width = "10%";
+                this.nextBtn.style.aspectRatio = "1 / 1";
+                this.nextBtn.style.lineHeight = "1";
+                this.nextBtn.style.display = "flex";
+                this.nextBtn.style.justifyContent = "center";
+                this.nextBtn.style.alignItems = "center";
+                this.nextBtn.style.backgroundColor = "#fff";
+                this.nextBtn.style.border = "1px solid #ccc";
+                this.nextBtn.style.outline = "none";
+                this.nextBtn.style.borderRadius = "4px";
+                this.nextBtn.style.cursor = "pointer";
+                this.nextBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 -960 960 960" fill="#777"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>`;
+                this.prevBtn.addEventListener("click", (e) => {
+                    
                 });
+                
+                this.first.appendChild(this.prevBtn);
+                this.first.appendChild(this.title);
+                this.first.appendChild(this.nextBtn);
 
-                this.dateDiv = document.createElement("div");
-                this.dateArr = new Array(42).fill(0);
-                let start = 1;
-                this.dateArr.forEach((date, idx) => {
-                    if(idx < this.option.day) {
-                        
-                    } else if (idx ==this.option.day) {
-                        this.dateArr[idx] = start;
-                    } else {
-                        this.dateArr[idx] = ++start;
-                    }
-                });
-                console.log(this.dateArr);
-                for(let i=0; i<6; i++) {
-                    this['row' + i] = document.createElement("div");
-                    this.dateDiv.appendChild(this['row' + i]);
+                this.second = document.createElement("div");
+                this.second.style.height = "auto";
+                this.second.style.borderBottom = "1px solid #ccc";
+                this.second.style.paddingBottom = (this.option.padding / 2) + "px";
+                this.dayArr = ['일', '월', '화', '수', '목', '금', '토'];
+                for(let i=0; i<this.dayArr.length; i++) {
+                    let dayItem = document.createElement("div");
+                    dayItem.textContent = this.dayArr[i];
+                    dayItem.style.width = "calc(100% / 7)";
+                    dayItem.style.display = "inline-block";
+                    dayItem.style.textAlign = "center";
+                    dayItem.style.fontSize = "80%";
+                    dayItem.style.backgroundColor = "transparent";
+                    this.second.appendChild(dayItem);
                 }
 
+                this.third = document.createElement("div");
+                this.third.style.height = "auto";
+                this.third.style.paddingTop = (this.option.padding / 2) + "px";
 
-                this.monthYearDiv.appendChild(this.prevBtn);
-                this.monthYearDiv.appendChild(this.monthYearStr);
-                this.monthYearDiv.appendChild(this.nextBtn);
-
-                this.target.appendChild(this.monthYearDiv);
-                this.target.appendChild(this.dayDiv);
-                this.target.appendChild(this.dateDiv);
+                this.cal.appendChild(this.first);
+                this.cal.appendChild(this.second);
+                this.cal.appendChild(this.third);
+                document.body.appendChild(this.cal);
+            }
+            
+            open(cssSelector) {
+                let target = document.querySelector(cssSelector);
+                if(!target) return;
+                if(target == this.target) {
+                    if(this.isOpen) return this.close();
+                } else {
+                    this.title.innerHTML = "";
+                    this.third.innerHTML = "";
+                }
+                this.target = target;
+                this.tagName = this.target.tagName.toLowerCase();
+                this.isOpen = true;
+                this.setDate();
+                this.setPos();
+                this.fadeIn();
+                this.target.addEventListener("keydown", (e) => {
+                    if(['enter', 'escape', 'tab'].includes(e.key.toLowerCase())) {
+                        this.close();
+                    }
+                });
             }
 
-            setStyle() {
+            close() {
+                this.isOpen = false;
+                this.target = null;
+                this.tagName = null;
+                this.fadeOut();
+            }
 
+            setDate(value) {
+                if(!value) value = (this.tagName == 'input') ? this.target.value : this.target.textContent;
+                if(value !== "" && value.trim().length !== 0 && !value.includes("-") && value.split("-").length < 3) {
+                    let errorMessage = "날짜형식은 YYYY-MM-DD 이어야합니다.";
+                    alert(errorMessage)
+                    throw new Error(errorMessage);
+                }
+                let valueDate = new Date(value);
+                let yearCheck = valueDate.getFullYear();
+                if(yearCheck < 1000) valueDate = NaN;
+                let date = (isNaN(valueDate)) ? new Date() : new Date(valueDate);
+                this.date = {
+                    year: date.getFullYear(),
+                    month: date.getMonth(),
+                    date: date.getDate(),
+                    day: date.getDay(),
+                }
+                this.title.textContent = `${this.date.year}년 ${this.date.month + 1}월`;
+                let grid = this.getGrid(this.date.year, this.date.month, this.date.date);
+                let flat = grid.flat();
+                for(let i=0; i<flat.length; i++) {
+                    flat[i].style.width = "calc(100% / 7)";
+                    flat[i].style.aspectRatio = "1 / 1";
+                    flat[i].style.border = "none";
+                    flat[i].style.outline = "none";
+                    flat[i].style.backgroundColor = "transparent";
+                    flat[i].style.cursor = "pointer";
+                    flat[i].style.color = "#444";
+                    flat[i].style.borderRadius = 4 + "px";
+                    if(flat[i].style.fontWeight == 'bolder') {
+                        flat[i].style.color = "#000";
+                    }
+                    flat[i].addEventListener("mouseenter", (e) => {
+                        flat[i].style.backgroundColor = "#efefef";
+                        flat[i].style.border = "1px solid #ccc";
+                    });
+                    flat[i].addEventListener("mouseleave", (e) => {
+                        flat[i].style.backgroundColor = "transparent";
+                        flat[i].style.border = "none";
+                    });
+                    this.third.appendChild(flat[i]);
+                }
+
+            }
+
+            setPos() {
+                if(!this.target) return;
+                let rect = this.target.getBoundingClientRect();
+                let bodyHeight = document.body.clientHeight;
+                let topPos;
+                if(rect.height + this.option.height + this.option.margin > bodyHeight - rect.top) {
+                    topPos = rect.top - this.option.height - this.option.margin;
+                } else {
+                    topPos = rect.top + rect.height + this.option.margin;
+                }
+                this.cal.style.top = topPos + "px";
+                this.cal.style.left = (rect.left) + "px";
+            }
+
+            setEvent() {
+                window.addEventListener("click", (e) => {
+                    if(e.target !== this.target && e.target !== this.cal) {
+                        if(!this.cal.contains(e.target)) this.close();
+                    }
+                });
+
+                window.addEventListener("resize", (e) => {
+                    this.setPos();
+                });
+            }
+
+            fadeIn() {
+                this.cal.style.opacity = 0;
+                this.cal.style.display = "block";
+                let start = null;
+                const animate = (timestamp) => {
+                    if(!start) start = timestamp;
+                    let elapsed = timestamp - start;
+                    let progress = Math.min(elapsed / (this.option.animationSpeed * 1000), 1);
+                    this.cal.style.opacity = progress;
+                    if(progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+
+            fadeOut() {
+                let start = null;
+                const animate = (timestamp) => {
+                    if(!start) start = timestamp;
+                    let elapsed = timestamp - start;
+                    let progress = Math.min(elapsed / (this.option.animationSpeed * 1000), 1);
+                    this.cal.style.opacity = 1 - progress;
+                    if(progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        this.cal.style.display = "none";
+                        this.title.innerHTML = "";
+                        this.third.innerHTML = "";
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+
+            getGrid(year, month, today) {
+                const firstDay = new Date(year, month, 1).getDay();
+                const lastDate = new Date(year, month + 1, 0).getDate();
+                const prevLastDate = new Date(year, month, 0).getDate();
+                let calendar = [];
+                let week = [];
+                for (let i = firstDay - 1; i >= 0; i--) {
+                    let btn = document.createElement("button");
+                    btn.textContent = prevLastDate - i;
+                    btn.style.opacity = 0.5;
+                    btn.addEventListener("click", (e) => {
+                        let newYear = this.date.month == 0 ? this.date.year - 1 : this.date.year;
+                        let newMonth = this.date.month == 0 ? 12 : this.date.month;
+                        let newDateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(prevLastDate - i).padStart(2, '0')}`;
+                        if(this.tagName == 'input') this.target.value = newDateStr;
+                        else this.target.textContent = newDateStr;
+                        this.close();
+                    });
+                    week.push(btn);
+                }
+                for (let day = 1; day <= lastDate; day++) {
+                    let btn = document.createElement("button");
+                    btn.textContent = day;
+                    if(day == today) {
+                        btn.style.fontWeight = "bolder";
+                    }
+                    btn.addEventListener("click", (e) => {
+                        let newDateStr = `${this.date.year}-${String(this.date.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        if(this.tagName == 'input') this.target.value = newDateStr;
+                        else this.target.textContent = newDateStr;
+                        this.close();
+                    });
+                    week.push(btn);
+                    if (week.length === 7) {
+                        calendar.push(week);
+                        week = [];
+                    }
+                }
+                let nextDay = 1;
+                while (week.length < 7) {
+                    let btn = document.createElement("button");
+                    btn.textContent = nextDay++;
+                    btn.style.opacity = 0.5;
+                    btn.addEventListener("click", (e) => {
+                        let newYear = this.date.month == 11 ? this.date.year + 1 : this.date.year;
+                        let newMonth = this.date.month == 11 ? 1 : this.date.month + 2;
+                        let newDateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(btn.textContent).padStart(2, '0')}`;
+                        if(this.tagName == 'input') this.target.value = newDateStr;
+                        else this.target.textContent = newDateStr;
+                        this.close();
+                    });
+                    week.push(btn);
+                }
+                calendar.push(week);
+                while (calendar.length < 6) {
+                    let extraWeek = [];
+                    for (let i = 0; i < 7; i++) {
+                        let btn = document.createElement("button");
+                        btn.textContent = nextDay++;
+                        btn.style.opacity = 0.5;
+                        btn.addEventListener("click", (e) => {
+                            let newYear = this.date.month == 11 ? this.date.year + 1 : this.date.year;
+                            let newMonth = this.date.month == 11 ? 1 : this.date.month + 2;
+                            let newDateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(btn.textContent).padStart(2, '0')}`;
+                            if(this.tagName == 'input') this.target.value = newDateStr;
+                            else this.target.textContent = newDateStr;
+                            this.close();
+                        });
+                        extraWeek.push(btn);
+                    }
+                    calendar.push(extraWeek);
+                }
+                return calendar;
             }
 
         }
     </script>
 </head>
 <body>
-    
-    <div id="test"></div>
+    <input type="text" id="test" value="2025-12-14" autocomplete="off" onclick="javascript:cal.open('#test')"> 
+    ~ 
+    <input type="text" id="test2" value="2025-01-15" onclick="javascript:cal.open('#test2')">
 
     <script>
-        let cal = new Calendar('#test');
+        let cal = new Calendar();
     </script>
 </body>
 </html>
