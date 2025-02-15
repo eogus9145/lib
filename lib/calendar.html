@@ -18,6 +18,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
+            gap: 1rem;
         }
         #calendar {
             width: 400px;
@@ -29,10 +31,14 @@
         class Calendar {
             constructor(option) {
                 const defaults = {
+                    target : null,
                     width: 250,
                     margin: 4,
                     padding: 8,
                     animationSpeed: 0.2,
+                    sundayHighlight: false,
+                    extraWeek: false,
+                    zIndex: 2,
                 };
                 this.option = Object.assign({}, defaults, option);
                 this.isOpen = false;
@@ -44,25 +50,29 @@
                 this.setEvent();
             }
 
+            replace() {}
+
             render() {
                 this.cal = document.createElement('div');
                 this.cal.style.width = this.option.width + "px";
                 this.cal.style.height = "auto";
                 this.cal.style.border = "1px solid black";
-                this.cal.style.display = "none";
-                this.cal.style.position = "absolute";
+                this.cal.style.display = (this.option.target) ? "block" : "none";
+                this.cal.style.position = (this.option.target) ? "relative" : "absolute";
                 this.cal.style.backgroundColor = "#fff";
                 this.cal.style.border = "1px solid #ccc";
                 this.cal.style.color = "#444";
                 this.cal.style.borderRadius = 4 + "px";
                 this.cal.style.padding = this.option.padding + "px";
+                this.cal.style.zIndex = this.option.zIndex;
+                this.cal.style.overflow = "hidden";
 
                 this.first = document.createElement("div");
                 this.first.style.width = "100%";
-                this.first.style.height = (this.option.width * 0.2) + "px";
+                this.first.style.padding = "2.5% 0 5%";
                 this.first.style.display = "flex";
                 this.first.style.justifyContent = "space-between";
-                this.first.style.alignItems = "center"
+                this.first.style.alignItems = "center";
 
                 this.prevBtn = document.createElement("button");
                 this.prevBtn.style.width = "10%";
@@ -77,12 +87,8 @@
                 this.prevBtn.style.borderRadius = "4px";
                 this.prevBtn.style.cursor = "pointer";
                 this.prevBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 -960 960 960" fill="#777"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>`;
-                this.prevBtn.addEventListener("click", (e) => {
-
-                });
 
                 this.title = document.createElement("span");
-                this.title.style.fontWeight = "600";
 
                 this.nextBtn = document.createElement("button");
                 this.nextBtn.style.width = "10%";
@@ -97,9 +103,7 @@
                 this.nextBtn.style.borderRadius = "4px";
                 this.nextBtn.style.cursor = "pointer";
                 this.nextBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 -960 960 960" fill="#777"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>`;
-                this.prevBtn.addEventListener("click", (e) => {
-                    
-                });
+
                 
                 this.first.appendChild(this.prevBtn);
                 this.first.appendChild(this.title);
@@ -118,6 +122,8 @@
                     dayItem.style.textAlign = "center";
                     dayItem.style.fontSize = "80%";
                     dayItem.style.backgroundColor = "transparent";
+                    dayItem.style.fontWeight = 600;
+                    if(this.option.sundayHighlight && i == 0) dayItem.style.color = '#dc3545';
                     this.second.appendChild(dayItem);
                 }
 
@@ -125,10 +131,47 @@
                 this.third.style.height = "auto";
                 this.third.style.paddingTop = (this.option.padding / 2) + "px";
 
+
+                this.selectYearDiv = document.createElement("div");
+                this.selectYearDiv.style.position = "absolute";
+                this.selectYearDiv.style.top = 0;
+                this.selectYearDiv.style.left = 0;
+                this.selectYearDiv.style.width = "100%";
+                this.selectYearDiv.style.height = "100%";
+                this.selectYearDiv.style.display = "none";
+                this.selectYearDiv.style.backgroundColor = "#fff";
+                this.selectYearDiv.style.zIndex = this.option.zIndex + 1;
+                this.selectYearDiv.style.gridTemplateColumns = "repeat(3, 1fr)";
+                this.selectYearDiv.style.gap = this.option.padding + "px";
+                this.selectYearDiv.style.padding = this.option.padding + "px";
+
+                this.selectMonthDiv = document.createElement("div");
+                this.selectMonthDiv.style.position = "absolute";
+                this.selectMonthDiv.style.top = 0;
+                this.selectMonthDiv.style.left = 0;
+                this.selectMonthDiv.style.width = "100%";
+                this.selectMonthDiv.style.height = "100%";
+                this.selectMonthDiv.style.display = "none";
+                this.selectMonthDiv.style.backgroundColor = "#fff";
+                this.selectMonthDiv.style.zIndex = this.option.zIndex + 1;
+                this.selectMonthDiv.style.gridTemplateColumns = "repeat(3, 1fr)";
+                this.selectMonthDiv.style.gap = this.option.padding + "px";
+                this.selectMonthDiv.style.padding = this.option.padding + "px";
+
+                this.cal.appendChild(this.selectYearDiv);
+                this.cal.appendChild(this.selectMonthDiv);
                 this.cal.appendChild(this.first);
                 this.cal.appendChild(this.second);
                 this.cal.appendChild(this.third);
-                document.body.appendChild(this.cal);
+                if (this.option.target) {
+                    let now = new Date();
+                    let dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    this.setDate(dateStr); 
+                    document.querySelector(this.option.target).replaceWith(this.cal);
+                } else {
+                    document.body.appendChild(this.cal);
+                }
+                
             }
             
             open(cssSelector) {
@@ -139,6 +182,8 @@
                 } else {
                     this.title.innerHTML = "";
                     this.third.innerHTML = "";
+                    this.selectYearDiv.style.display = "none";
+                    this.selectMonthDiv.style.display = "none";
                 }
                 this.target = target;
                 this.tagName = this.target.tagName.toLowerCase();
@@ -167,6 +212,7 @@
                     alert(errorMessage)
                     throw new Error(errorMessage);
                 }
+                this.third.innerHTML = "";
                 let valueDate = new Date(value);
                 let yearCheck = valueDate.getFullYear();
                 if(yearCheck < 1000) valueDate = NaN;
@@ -177,7 +223,32 @@
                     date: date.getDate(),
                     day: date.getDay(),
                 }
-                this.title.textContent = `${this.date.year}년 ${this.date.month + 1}월`;
+
+                if(this.titleYear) this.titleYear.remove();
+                this.titleYear = document.createElement("button")
+                this.titleYear.style.fontWeight = "600";
+                this.titleYear.style.cursor = "pointer";
+                this.titleYear.style.border = "none";
+                this.titleYear.style.outline = "none";
+                this.titleYear.style.fontSize = "100%";
+                this.titleYear.style.background = "transparent";
+
+                if(this.titleGap) this.titleGap.remove();
+
+                if(this.titleMonth) this.titleMonth.remove();
+                this.titleMonth = document.createElement("button")
+                this.titleMonth.style.fontWeight = "600";
+                this.titleMonth.style.cursor = "pointer";
+                this.titleMonth.style.border = "none";
+                this.titleMonth.style.outline = "none";
+                this.titleMonth.style.fontSize = "100%";
+                this.titleMonth.style.background = "transparent";
+
+                this.titleYear.innerHTML = `${this.date.year}년`;
+                this.titleMonth.innerHTML = `&nbsp;${String(this.date.month + 1).padStart(2, '0')}월`;
+                this.title.appendChild(this.titleYear);
+                this.title.appendChild(this.titleMonth);
+
                 let grid = this.getGrid(this.date.year, this.date.month, this.date.date);
                 let flat = grid.flat();
                 for(let i=0; i<flat.length; i++) {
@@ -186,21 +257,74 @@
                     flat[i].style.border = "none";
                     flat[i].style.outline = "none";
                     flat[i].style.backgroundColor = "transparent";
-                    flat[i].style.cursor = "pointer";
+                    flat[i].style.cursor = (this.option.target) ? "auto" : "pointer";
                     flat[i].style.color = "#444";
                     flat[i].style.borderRadius = 4 + "px";
                     if(flat[i].style.fontWeight == 'bolder') {
                         flat[i].style.color = "#000";
                     }
-                    flat[i].addEventListener("mouseenter", (e) => {
-                        flat[i].style.backgroundColor = "#efefef";
-                        flat[i].style.border = "1px solid #ccc";
-                    });
-                    flat[i].addEventListener("mouseleave", (e) => {
-                        flat[i].style.backgroundColor = "transparent";
-                        flat[i].style.border = "none";
-                    });
+                    if(!this.option.target) {
+                        flat[i].addEventListener("mouseenter", (e) => {
+                            flat[i].style.backgroundColor = "#efefef";
+                            flat[i].style.border = "1px solid #ccc";
+                        });
+                        flat[i].addEventListener("mouseleave", (e) => {
+                            flat[i].style.backgroundColor = "transparent";
+                            flat[i].style.border = "none";
+                        });
+                    }
                     this.third.appendChild(flat[i]);
+                }
+
+                this.titleYear.addEventListener("click", (e) => {
+                    this.selectRender('year');
+                    this.selectYearDiv.style.display = "grid";
+                });
+                this.titleMonth.addEventListener("click", (e) => {
+                    this.selectRender('month');
+                    this.selectMonthDiv.style.display = "grid";
+                });
+
+            }
+
+            selectRender(mode) {
+                let targetDiv = (mode == 'month') ? this.selectMonthDiv : this.selectYearDiv;
+                targetDiv.innerHTML = "";
+                let yearArr;
+                if(mode == 'year') {
+                    yearArr = Array.from({ length: 10 }, (_, i) => Math.floor(this.date.year / 10) * 10 + i)
+                    let pre = yearArr[0] - 1;
+                    yearArr.unshift(yearArr[0] - 1);
+                    yearArr.push(yearArr[yearArr.length - 1] + 1);
+                }
+                for(let i=0; i<12; i++) {
+                    let content = (mode == 'month') ? `${i + 1}월` : `${yearArr[i]}년`;
+                    let condition = (mode == 'month') ? this.date.month == i : this.date.year == yearArr[i]
+                    let btn = document.createElement("button");
+                    btn.textContent = content;
+                    btn.style.border = "1px solid #f5f5f5";
+                    btn.style.outline = "none";
+                    btn.style.backgroundColor = "transparent";
+                    btn.style.cursor = "pointer";
+                    btn.style.borderRadius = "4px";
+                    btn.style.backgroundColor = (condition) ? "#f5f5f5" : "transparent";
+                    targetDiv.appendChild(btn);
+                    btn.addEventListener("mouseenter", (e) => {
+                        if(!condition) btn.style.backgroundColor = "#f5f5f5";
+                    });
+                    btn.addEventListener("mouseleave", (e) => {
+                        if(!condition) btn.style.backgroundColor = "transparent";
+                    });
+                    btn.addEventListener("click", (e) => {
+                        let newDateStr;
+                        if(mode == 'month') {
+                            newDateStr = `${this.date.year}-${String(content.slice(0, -1)).padStart(2, '0')}-${String(this.date.date).padStart(2, '0')}`;
+                        } else {
+                            newDateStr = `${content.slice(0, -1)}-${String(this.date.month + 1).padStart(2, '0')}-${String(this.date.date).padStart(2, '0')}`;
+                        }
+                        this.setDate(newDateStr);
+                        targetDiv.style.display = "none";
+                    });
                 }
 
             }
@@ -221,13 +345,37 @@
 
             setEvent() {
                 window.addEventListener("click", (e) => {
-                    if(e.target !== this.target && e.target !== this.cal) {
+                    if(!this.option.target && e.target !== this.target && e.target !== this.cal) {
                         if(!this.cal.contains(e.target)) this.close();
                     }
                 });
 
                 window.addEventListener("resize", (e) => {
-                    this.setPos();
+                    if(!this.option.target) this.setPos();
+                });
+                
+                this.prevBtn.addEventListener("click", () => {
+                    let newYear = this.date.month === 0 ? this.date.year - 1 : this.date.year;
+                    let newMonth = this.date.month === 0 ? 11 : this.date.month - 1;
+                    let newDate = this.date.date;
+                    let lastDateOfNewMonth = new Date(newYear, newMonth + 1, 0).getDate();
+                    if (newMonth === 1 && newDate > lastDateOfNewMonth) {
+                        newDate = lastDateOfNewMonth;
+                    }
+                    this.date = { year: newYear, month: newMonth, date: newDate };
+                    this.setDate(`${newYear}-${String(newMonth + 1).padStart(2, '0')}-${String(newDate).padStart(2, '0')}`);
+                });
+
+                this.nextBtn.addEventListener("click", () => {
+                    let newYear = this.date.month === 11 ? this.date.year + 1 : this.date.year;
+                    let newMonth = this.date.month === 11 ? 0 : this.date.month + 1;
+                    let newDate = this.date.date;
+                    let lastDateOfNewMonth = new Date(newYear, newMonth + 1, 0).getDate();
+                    if (newMonth === 1 && newDate > lastDateOfNewMonth) {
+                        newDate = lastDateOfNewMonth;
+                    }
+                    this.date = { year: newYear, month: newMonth, date: newDate };
+                    this.setDate(`${newYear}-${String(newMonth + 1).padStart(2, '0')}-${String(newDate).padStart(2, '0')}`);
                 });
             }
 
@@ -274,69 +422,63 @@
                 for (let i = firstDay - 1; i >= 0; i--) {
                     let btn = document.createElement("button");
                     btn.textContent = prevLastDate - i;
-                    btn.style.opacity = 0.5;
-                    btn.addEventListener("click", (e) => {
-                        let newYear = this.date.month == 0 ? this.date.year - 1 : this.date.year;
-                        let newMonth = this.date.month == 0 ? 12 : this.date.month;
-                        let newDateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(prevLastDate - i).padStart(2, '0')}`;
-                        if(this.tagName == 'input') this.target.value = newDateStr;
-                        else this.target.textContent = newDateStr;
-                        this.close();
-                    });
+                    btn.style.opacity = 0.3;
+                    if(!this.option.target) {
+                        btn.addEventListener("click", (e) => {
+                            let newYear = this.date.month == 0 ? this.date.year - 1 : this.date.year;
+                            let newMonth = this.date.month == 0 ? 12 : this.date.month;
+                            let newDateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(prevLastDate - i).padStart(2, '0')}`;
+                            if(this.tagName == 'input') this.target.value = newDateStr;
+                            else this.target.textContent = newDateStr;
+                            this.close();
+                        });
+                    }
                     week.push(btn);
                 }
+                let tempDate;
                 for (let day = 1; day <= lastDate; day++) {
                     let btn = document.createElement("button");
                     btn.textContent = day;
                     if(day == today) {
                         btn.style.fontWeight = "bolder";
+                    } else {
+                        btn.style.fontWeight = 500;
                     }
-                    btn.addEventListener("click", (e) => {
-                        let newDateStr = `${this.date.year}-${String(this.date.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                        if(this.tagName == 'input') this.target.value = newDateStr;
-                        else this.target.textContent = newDateStr;
-                        this.close();
-                    });
+                    if(!this.option.target) {
+                        btn.addEventListener("click", (e) => {
+                            let newDateStr = `${this.date.year}-${String(this.date.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                            if(this.tagName == 'input') this.target.value = newDateStr;
+                            else this.target.textContent = newDateStr;
+                            this.close();
+                        });
+                    }
                     week.push(btn);
                     if (week.length === 7) {
+                        tempDate = day;
                         calendar.push(week);
                         week = [];
                     }
                 }
                 let nextDay = 1;
-                while (week.length < 7) {
-                    let btn = document.createElement("button");
-                    btn.textContent = nextDay++;
-                    btn.style.opacity = 0.5;
-                    btn.addEventListener("click", (e) => {
-                        let newYear = this.date.month == 11 ? this.date.year + 1 : this.date.year;
-                        let newMonth = this.date.month == 11 ? 1 : this.date.month + 2;
-                        let newDateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(btn.textContent).padStart(2, '0')}`;
-                        if(this.tagName == 'input') this.target.value = newDateStr;
-                        else this.target.textContent = newDateStr;
-                        this.close();
-                    });
-                    week.push(btn);
-                }
-                calendar.push(week);
-                while (calendar.length < 6) {
-                    let extraWeek = [];
-                    for (let i = 0; i < 7; i++) {
+                if(tempDate < lastDate) {
+                    while (week.length < 7) {
                         let btn = document.createElement("button");
                         btn.textContent = nextDay++;
-                        btn.style.opacity = 0.5;
-                        btn.addEventListener("click", (e) => {
-                            let newYear = this.date.month == 11 ? this.date.year + 1 : this.date.year;
-                            let newMonth = this.date.month == 11 ? 1 : this.date.month + 2;
-                            let newDateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(btn.textContent).padStart(2, '0')}`;
-                            if(this.tagName == 'input') this.target.value = newDateStr;
-                            else this.target.textContent = newDateStr;
-                            this.close();
-                        });
-                        extraWeek.push(btn);
+                        btn.style.opacity = 0.3;
+                        if(!this.option.target) {
+                            btn.addEventListener("click", (e) => {
+                                let newYear = this.date.month == 11 ? this.date.year + 1 : this.date.year;
+                                let newMonth = this.date.month == 11 ? 1 : this.date.month + 2;
+                                let newDateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(btn.textContent).padStart(2, '0')}`;
+                                if(this.tagName == 'input') this.target.value = newDateStr;
+                                else this.target.textContent = newDateStr;
+                                this.close();
+                            });
+                        }
+                        week.push(btn);
                     }
-                    calendar.push(extraWeek);
                 }
+                calendar.push(week);
                 return calendar;
             }
 
@@ -344,12 +486,14 @@
     </script>
 </head>
 <body>
-    <input type="text" id="test" value="2025-12-14" autocomplete="off" onclick="javascript:cal.open('#test')"> 
-    ~ 
-    <input type="text" id="test2" value="2025-01-15" onclick="javascript:cal.open('#test2')">
+    <input type="text" id="test" value="2026-02-01" autocomplete="off" onclick="javascript:cal.open('#test')">
+    <div id="test2" onclick="javascript:cal.open('#test2')">2002-06-20</div>
+
+    <div id="cal"></div>
 
     <script>
         let cal = new Calendar();
+        let cal2 = new Calendar({target: '#cal'});
     </script>
 </body>
 </html>
