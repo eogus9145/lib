@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>드롭다운</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #test {
+            border: 1px solid red;
+            margin-top: 1rem;
+        }
+    </style>
+    <script>
+        class Dropdown {
+            constructor(cssSelctor, option) {
+                this.dropdown = document.querySelector(cssSelctor);
+                if(!this.dropdown) throw new Error("드랍다운 요소의 선택자가 올바르지 않습니다.");
+                const defaults = {
+                    expose : false,
+                    target: null,
+                    openMethod: 'click',
+                };
+                this.option = Object.assign({}, defaults, option);
+                if(!this.option.expose && !this.option.target) throw new Error("상호작용 할 타겟을 지정해주세요.");
+                this.target = document.querySelector(this.option.target);
+                this.init();
+            }
+            init() {
+                window.addEventListener("DOMContentLoaded", (e) => {
+                    this.setStyle();
+                    this.setEvent();
+                });
+            }
+            
+            setStyle() {
+                if(!this.option.expose) {
+                    this.dropdown.style.display = "none";
+                    if(this.target) {
+                        this.dropdown.style.position = "absolute";
+                        this.setPos();
+                    }
+                }
+
+                this.uls = this.dropdown.querySelectorAll(":scope > ul");
+                this.uls.forEach((ul, ulIdx) => {
+                    this.setSubmenu(ul);
+                })
+            }
+
+            setSubmenu(ul) {
+                ul.style.listStyle = "none";
+                let lis = ul.querySelectorAll(":scope > li");
+                lis.forEach((li, liIdx) => {
+                    let subUl = li.querySelector("ul");
+                    let isCascade = subUl ? true : false;
+                    if(isCascade) {
+                        subUl.style.display = "none";
+                        let arrow = document.createElement("span");
+                        arrow.textContent = ">";
+                        arrow.style.float = "right";
+                        li.appendChild(arrow);
+                        this.setSubmenu(subUl);
+                        li.addEventListener("mouseenter", (e) => {
+                            li.style.position = "relative";
+                            subUl.style.position = "absolute";
+                            subUl.style.top = 0 + "px";
+                            subUl.style.left = this.dropdown.offsetWidth + "px";
+                            subUl.style.display = "block";
+                            subUl.style.whiteSpace = "nowrap";
+                            subUl.style.width = this.dropdown.offsetWidth + "px";
+                        });
+                        li.addEventListener("mouseleave", (e) => {
+                            subUl.style.display = "none";
+                        });
+                    }
+                });
+            }
+
+            setPos() {
+                let rect = this.target.getBoundingClientRect();
+                let bodyHeight = document.body.clientHeight;
+                let topPos;
+                if(rect.height + this.dropdown.offsetHeight > bodyHeight - rect.top) {
+                    topPos = rect.top - this.dropdown.offsetHeight;
+                } else {
+                    topPos = rect.top + rect.height;
+                }
+                this.dropdown.style.top = topPos + "px";
+                this.dropdown.style.left = (rect.left) + "px";
+            }
+
+            setEvent() {
+                if(this.option.expose) {
+                    
+                } else {
+                    if(this.option.openMethod == 'click') {
+                        this.target.addEventListener("click", (e) => {
+                            if(this.isOpen) {
+                                this.isOpen = false;
+                                this.dropdown.style.display = "none";
+                            } else {
+                                this.isOpen = true;
+                                this.dropdown.style.display = "block";
+                            }
+                        });
+                    } else if(this.option.openMethod == 'contextmenu') {
+                        this.target.addEventListener("contextmenu", (e) => {
+                            e.preventDefault();
+                            this.dropdown.style.display = "block";
+                        });
+                    } else if(this.option.openMethod == 'hover') {
+                        this.target.addEventListener("mouseenter", (e) => {
+                            this.dropdown.style.display = "block";
+                        });
+                        this.target.addEventListener("mouseleave", (e) => {
+                            this.dropdown.style.display = "none";
+                        });
+                    }
+
+                    window.addEventListener("click", (e) => {
+                        if(e.target !== this.target && e.target !== this.dropdown) {
+                            if(!this.dropdown.contains(e.target)) {
+                                this.dropdown.style.display = "none";
+                                this.isOpen = false;
+                            }
+                        }
+                    });
+
+                    window.addEventListener("resize", (e) => {
+                        this.setPos();
+                    });
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <button id="openBtn">OPEN</button>
+    <div id="test">
+        <div>My menu</div>
+        <ul>
+            <li>
+                메뉴1
+            </li>
+            <li>
+                메뉴2
+            </li>
+            <li>
+                메뉴3
+                <ul>
+                    <li>메뉴3-1</li>
+                    <li>
+                        메뉴3-2
+                        <ul>
+                            <li>메뉴3-2-1</li>
+                            <li>메뉴3-2-2</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    
+
+    <script>
+        let dropdown = new Dropdown('#test', {expose: false, target: '#openBtn', openMethod: 'click'});
+    </script>
+</body>
+</html>
